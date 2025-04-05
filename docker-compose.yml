@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: finance-postgres
+    environment:
+      POSTGRES_DB: finance_db       # Nome do banco
+      POSTGRES_USER: finance_user   # Usuário
+      POSTGRES_PASSWORD: finance_pass  # Senha
+    ports:
+      - "5432:5432"                # Porta do PostgreSQL
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Persistência dos dados
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: finance-keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin         # Usuário admin
+      KEYCLOAK_ADMIN_PASSWORD: admin  # Senha admin
+    ports:
+      - "8081:8080"                 # Porta do Keycloak (8081 no host)
+    depends_on:
+      - postgres                    # Espera o PostgreSQL iniciar
+
+volumes:
+  postgres_data:                    # Volume para persistir dados do PostgreSQL
