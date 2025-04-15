@@ -5,24 +5,35 @@ services:
     image: postgres:13
     container_name: finance-postgres
     environment:
-      POSTGRES_DB: finance_db       # Nome do banco
-      POSTGRES_USER: finance_user   # Usuário
-      POSTGRES_PASSWORD: finance_pass  # Senha
+      POSTGRES_DB: finance_db
+      POSTGRES_USER: finance_user
+      POSTGRES_PASSWORD: finance_pass
+      POSTGRES_HOST_AUTH_METHOD: md5  # Adicione esta linha para autenticação segura
     ports:
-      - "5432:5432"                # Porta do PostgreSQL
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Persistência dos dados
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:  # Adicione healthcheck para melhor controle
+      test: ["CMD-SHELL", "pg_isready -U finance_user -d finance_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: finance-keycloak
     environment:
-      KEYCLOAK_ADMIN: admin         # Usuário admin
-      KEYCLOAK_ADMIN_PASSWORD: admin  # Senha admin
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres  # Garante que o Keycloak use o PostgreSQL
+      KC_DB_URL: jdbc:postgresql://postgres:5432/finance_db
+      KC_DB_USERNAME: finance_user
+      KC_DB_PASSWORD: finance_pass
     ports:
-      - "8081:8080"                 # Porta do Keycloak (8081 no host)
+      - "8081:8080"
     depends_on:
-      - postgres                    # Espera o PostgreSQL iniciar
+      postgres:
+        condition: service_healthy  # Espera até o PostgreSQL estar pronto
 
 volumes:
-  postgres_data:                    # Volume para persistir dados do PostgreSQL
+  postgres_data:
